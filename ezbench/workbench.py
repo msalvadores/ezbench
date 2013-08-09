@@ -8,7 +8,7 @@ import struct
 import time
 import math
 import wrapper_function
-import bench_thread
+from bench_thread import BenchmarkThread
 
 class Benchmark:
     def __init__(self):
@@ -16,13 +16,17 @@ class Benchmark:
         self.id_measure = 0
         self.lock = threading.Lock()
         self.pack_fields = "Ifff"
-        self.measure_tuple = collections.namedtuple("measure","id init end elapse data")
-        self.threads = dict()
+        self.measure_tuple = collections.namedtuple("measure",
+                "id group init end elapse data")
+        self.threads = list()
 
-    def link(self,function):
+    def link(self,function,group=None):
+        if group is None:
+            group = ".".join([function.im_func.__name__,
+                              function.im_class.__name__])
         if 'im_class' in dir(function):
             class_ref = function.im_class
-            wrapped = wrapper_function.ezbench_wrapper(function,self)
+            wrapped = wrapper_function.ezbench_wrapper(function,self,group)
             class_ref.__dict__[function.im_func.func_name] = wrapped 
         else:
             raise Exception("plain functions not yet supported")
@@ -30,15 +34,18 @@ class Benchmark:
     def add_thread(self,thread):
         bt = BenchmarkThread(thread.name,self)
         thread.__dict__['ezbench'] = bt
-        self.thread.append(bt)
+        self.threads.append(bt)
 
-    def create_measure(id,init,end,data=None):
+    def create_measure(self,id,group,init,end,data=None):
         elapse = float(str(end-init)) #get rid of decimal tail
         measure = self.measure_tuple(id=id,
+                                     group=group,
                                      init=init,
                                      end=end,
                                      elapse=elapse,
                                      data=data)
+        return measure
+
     def measure(self,*arg,**kw):
         group = arg[0]
         lambda_runner = arg[1]

@@ -18,6 +18,27 @@ class SingleProcess:
         self.count += 1
         return self.count
 
+class SubGroupProcess:
+    def __init__(self):
+        self.count = 0
+        self.last = None
+        
+    def sub1(self):
+        pass
+
+    def sub2(self):
+        pass
+
+    def do_it(self):
+        return
+        x = random.randint(1, 10)
+        if x < 7:
+            time.sleep(random.random() + 0.001)
+        else:
+            time.sleep(random.random() + 0.4)
+        self.count += 1
+        return self.count
+
 def test_single_process():
     "testing a simple process benchmark no subtasks"
 
@@ -66,3 +87,16 @@ def test_save_and_load():
     assert from_log.median() == benchmark.median()
     assert from_log.maximum() == benchmark.maximum()
     assert from_log.percentiles() == benchmark.percentiles()
+
+def test_link():
+    benchmark = ezbench.Benchmark()
+    benchmark.link(SingleProcess.do_it)
+    proc = SingleProcess()
+    for x in range(0,5):
+        result = proc.do_it()
+        assert result == x+1, "Sample result does not match the original"
+    pdb.set_trace()
+
+
+if __name__ == "__main__":
+    test_link()
