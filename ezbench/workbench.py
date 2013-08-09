@@ -7,6 +7,8 @@ import collections
 import struct
 import time
 import math
+import wrapper_function
+import bench_thread
 
 class Benchmark:
     def __init__(self):
@@ -15,6 +17,20 @@ class Benchmark:
         self.lock = threading.Lock()
         self.pack_fields = "Ifff"
         self.measure_tuple = collections.namedtuple("measure","id init end elapse data")
+        self.threads = dict()
+
+    def link(self,function):
+        if 'im_class' in dir(function):
+            class_ref = function.im_class
+            wrapped = wrapper_function.ezbench_wrapper(function,self)
+            class_ref.__dict__[function.im_func.func_name] = wrapped 
+        else:
+            raise Exception("plain functions not yet supported")
+
+    def add_thread(self,thread):
+        bt = BenchmarkThread(thread.name,self)
+        thread.__dict__['ezbench'] = bt
+        self.thread.append(bt)
 
     def create_measure(id,init,end,data=None):
         elapse = float(str(end-init)) #get rid of decimal tail
