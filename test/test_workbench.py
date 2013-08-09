@@ -51,8 +51,8 @@ def test_single_process():
 
     top = benchmark.maximum()
     assert top < 1.5
-    assert len(benchmark.measures) == 1
-    assert len(benchmark.measures["SingleProcess.do_it"]) == 20
+    assert len(benchmark.threads) == 1
+    assert len(benchmark.measures()) == 20
 
     percsA = benchmark.percentiles()
     assert len(percsA) == 3
@@ -84,6 +84,7 @@ def test_save_and_load():
     from_log = ezbench.Benchmark()
     from_log.load(save_here)
 
+    assert len(from_log.measures()) == len(benchmark.measures())
     assert from_log.median() == benchmark.median()
     assert from_log.maximum() == benchmark.maximum()
     assert from_log.percentiles() == benchmark.percentiles()

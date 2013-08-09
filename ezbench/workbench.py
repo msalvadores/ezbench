@@ -12,13 +12,12 @@ from bench_thread import BenchmarkThread
 
 class Benchmark:
     def __init__(self):
-        self.measures = dict()
-        self.id_measure = 0
         self.lock = threading.Lock()
         self.pack_fields = "Ifff"
         self.measure_tuple = collections.namedtuple("measure",
-                "id group init end elapse data")
+                "id group init end elapse data thread_name")
         self.threads = list()
+        self.loaded_from_file = False
 
     def link(self,function,group=None):
         if group is None:
@@ -32,32 +31,40 @@ class Benchmark:
             raise Exception("plain functions not yet supported")
 
     def add_thread(self,thread):
-        bt = BenchmarkThread(thread.name,self)
-        thread.__dict__['ezbench'] = bt
+        bt = None
+        #loaded from file
+        if isinstance(thread,basestring):
+            bt = BenchmarkThread(thread,self)
+        else:
+            bt = BenchmarkThread(thread.name,self)
+            thread.__dict__['ezbench'] = bt
         self.threads.append(bt)
+        return bt
 
-    def create_measure(self,id,group,init,end,data=None):
+    def create_measure(self,id,group,init,end,thread_name,data=None):
+        init = float(str(init))
+        end = float(str(end))
         elapse = float(str(end-init)) #get rid of decimal tail
         measure = self.measure_tuple(id=id,
                                      group=group,
                                      init=init,
                                      end=end,
                                      elapse=elapse,
-                                     data=data)
+                                     data=data,
+                                     thread_name=thread_name)
         return measure
 
     def measure(self,*arg,**kw):
         group = arg[0]
         lambda_runner = arg[1]
+        data = kw['data'] if kw.has_key("data") else None
         init = time.time()
         result = lambda_runner()
         end = time.time()
-        if not self.measures.has_key(group):
-            self.measures[group] = list()
-        with self.lock:
-            self.id_measure += 1
-            measure = create_measure(self.id_measure,init,end,data=None)
-        self.measures[group].append(measure)
+        thread = threading.currentThread()
+        if not thread.__dict__.has_key('ezbench'):
+            self.add_thread(thread)
+        thread.ezbench.add_measure(group,init,end,data=data)
         return result
 
     def save(self,out_path):
@@ -65,37 +72,39 @@ class Benchmark:
             raise Exception("The file path %s already exists"%out_path)
         with open(out_path, 'wb') as fout:
             csvfile = csv.writer(fout)
-            for group in self.measures.keys():
-                for m in self.measures[group]:
-                    csvfile.writerow([m.id,group,m.init,m.end,m.elapse,m.data])
+            for m in self.measures():
+                csvfile.writerow([m.id,m.group,m.init,m.end,
+                                  m.elapse,m.data,m.thread_name])
 
     def load(self,from_path):
-        if len(self.measures) > 0:
+        if len(self.threads) > 0:
             raise Exception("Cannot load a file in a benchmark with data")
         with open(from_path, 'rb') as fin:
             csvreader = csv.reader(fin)
+            threads_by_name = dict()
             for row in csvreader:
-                id,group,init,end,elapse,data = \
-                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5])
-                if not self.measures.has_key(group):
-                    self.measures[group] = list()
-                m= self.measure_tuple(id=id,
-                                     init=init,
-                                     end=end,
-                                     elapse=elapse,
-                                     data=data)
-                self.measures[group].append(m)
+                id,group,init,end,elapse,data,thread_name = \
+                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5],row[6])
+                if not threads_by_name.has_key(thread_name):
+                    threads_by_name[thread_name] = self.add_thread(thread_name)
+                threads_by_name[thread_name].add_measure(group,init,end,data=data)
+            self.threads = threads_by_name.values()
+        self.loaded_from_file = True
 
     def groups(self):
         return self.measures.keys()
 
-    def sorted_sample(self,group=None):
+    def measures(self,thread_name=None,group=None):
         sample = list()
-        if not group:
-            for xgroup in self.groups():
-                sample.extend(self.measures[xgroup])
-        else:
-            sample.extend(self.measures[group])
+        for thread in self.threads:
+            if thread_name is None or thread.name == thread_name:
+                for measure in thread.measures:
+                    if group is None or group == measure.group:
+                        sample.append(measure)
+        return sample
+
+    def sorted_sample(self,group=None,thread_name=None):
+        sample = self.measures(thread_name=thread_name,group=group)
         return sorted(sample, key=lambda x: x.elapse)
 
     def maximum(self,group=None):
