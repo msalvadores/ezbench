@@ -16,6 +16,13 @@ class Benchmark:
         self.pack_fields = "Ifff"
         self.measure_tuple = collections.namedtuple("measure","id init end elapse data")
 
+    def create_measure(id,init,end,data=None):
+        elapse = float(str(end-init)) #get rid of decimal tail
+        measure = self.measure_tuple(id=id,
+                                     init=init,
+                                     end=end,
+                                     elapse=elapse,
+                                     data=data)
     def measure(self,*arg,**kw):
         group = arg[0]
         lambda_runner = arg[1]
@@ -26,14 +33,8 @@ class Benchmark:
             self.measures[group] = list()
         with self.lock:
             self.id_measure += 1
-            elapse = float(str(end-init)) #get rid of decimal tail
-            measure = self.measure_tuple(id=self.id_measure,
-                                         init=init,
-                                         end=end,
-                                         elapse=elapse,
-                                         data=None)
-
-            self.measures[group].append(measure)
+            measure = create_measure(self.id_measure,init,end,data=None)
+        self.measures[group].append(measure)
         return result
 
     def save(self,out_path):
