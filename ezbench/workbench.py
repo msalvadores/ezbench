@@ -36,6 +36,32 @@ class Benchmark:
             self.measures[group].append(measure)
         return result
 
+    def save(self,out_path):
+        if os.path.exists(out_path):
+            raise Exception("The file path %s already exists"%out_path)
+        with open(out_path, 'wb') as fout:
+            csvfile = csv.writer(fout)
+            for group in self.measures.keys():
+                for m in self.measures[group]:
+                    csvfile.writerow([m.id,group,m.init,m.end,m.elapse,m.data])
+
+    def load(self,from_path):
+        if len(self.measures) > 0:
+            raise Exception("Cannot load a file in a benchmark with data")
+        with open(from_path, 'rb') as fin:
+            csvreader = csv.reader(fin)
+            for row in csvreader:
+                id,group,init,end,elapse,data = \
+                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5])
+                if not self.measures.has_key(group):
+                    self.measures[group] = list()
+                m= self.measure_tuple(id=id,
+                                     init=init,
+                                     end=end,
+                                     elapse=elapse,
+                                     data=data)
+                self.measures[group].append(m)
+
     def groups(self):
         return self.measures.keys()
 

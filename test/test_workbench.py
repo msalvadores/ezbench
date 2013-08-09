@@ -47,3 +47,22 @@ def test_single_process():
 
     medianPerc = benchmark.percentiles(include=[50])
     assert medianPerc[50] == benchmark.median() , "median and perc 50 do not match"
+
+def test_save_and_load():
+    benchmark = ezbench.Benchmark()
+    proc = SingleProcess()
+    for x in range(0,12):
+        result = benchmark.measure("SingleProcess.do_it", 
+                          lambda: proc.do_it())
+    save_here = "./test/results/test_save_and_load.csv"
+    if os.path.exists(save_here):
+        os.remove(save_here)
+    benchmark.save(save_here)
+    assert os.path.exists(save_here)
+
+    from_log = ezbench.Benchmark()
+    from_log.load(save_here)
+
+    assert from_log.median() == benchmark.median()
+    assert from_log.maximum() == benchmark.maximum()
+    assert from_log.percentiles() == benchmark.percentiles()
