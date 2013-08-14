@@ -96,8 +96,13 @@ def test_link():
     for x in range(0,5):
         result = proc.do_it()
         assert result == x+1, "Sample result does not match the original"
-    pdb.set_trace()
+    top = benchmark.maximum()
+    assert top < 1.5
+    assert len(benchmark.threads) == 1
+    assert len(benchmark.measures()) == 5
 
 
 if __name__ == "__main__":
+    #test_single_process()
+    #test_save_and_load()
     test_link()
