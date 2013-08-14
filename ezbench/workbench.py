@@ -21,8 +21,8 @@ class Benchmark:
 
     def link(self,function,group=None):
         if group is None:
-            group = ".".join([function.im_func.__name__,
-                              function.im_class.__name__])
+            group = ".".join([function.im_class.__name__,
+                              function.im_func.__name__])
         if 'im_class' in dir(function):
             class_ref = function.im_class
             wrapped = wrapper_function.ezbench_wrapper(function,self,group)
