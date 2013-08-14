@@ -18,11 +18,13 @@ class Benchmark:
                 "id group init end elapse data thread_name")
         self.threads = list()
         self.loaded_from_file = False
+        self.links = dict()
 
     def link(self,function,group=None):
         if group is None:
             group = ".".join([function.im_class.__name__,
                               function.im_func.__name__])
+        self.links[group] = function
         if 'im_class' in dir(function):
             class_ref = function.im_class
             wrapped = wrapper_function.ezbench_wrapper(function,self,group)
@@ -92,7 +94,7 @@ class Benchmark:
         self.loaded_from_file = True
 
     def groups(self):
-        return self.measures.keys()
+        return self.links.keys()
 
     def measures(self,thread_name=None,group=None):
         sample = list()
