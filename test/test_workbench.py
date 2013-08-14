@@ -101,8 +101,31 @@ def test_link():
     assert len(benchmark.threads) == 1
     assert len(benchmark.measures()) == 5
 
+def test_multihread():
+    import threading
+    benchmark = ezbench.Benchmark()
+    benchmark.link(SingleProcess.do_it)
+    def bench_this():
+        proc = SingleProcess()
+        for x in range(0,5):
+            result = proc.do_it()
+
+    threads = []
+    for x in range(0,3):
+        t = threading.Thread(target=bench_this)
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+    assert len(benchmark.threads) == 3
+    assert len(benchmark.measures()) == 15
+    for t in benchmark.threads:
+        assert len(benchmark.measures(thread_name=t.name)) == 5
 
 if __name__ == "__main__":
     #test_single_process()
     #test_save_and_load()
-    test_link()
+    #test_link()
+    test_multihread()
