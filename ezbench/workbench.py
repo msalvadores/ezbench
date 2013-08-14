@@ -44,9 +44,9 @@ class Benchmark:
         return bt
 
     def create_measure(self,id,group,init,end,thread_name,data=None):
-        init = float(str(init))
-        end = float(str(end))
-        elapse = float(str(end-init)) #get rid of decimal tail
+        init = float("%.5f"%init)
+        end = float("%.5f"%end)
+        elapse = float("%.5f"%(end-init)) #get rid of decimal tail
         measure = self.measure_tuple(id=id,
                                      group=group,
                                      init=init,
