@@ -27,7 +27,10 @@ class Benchmark:
         self.links[group] = function
         if 'im_class' in dir(function):
             class_ref = function.im_class
-            wrapped = wrapper_function.ezbench_wrapper(function,self,group,subgroups=subgroups)
+            wrapped = wrapper_function.ezbench_wrapper(function,
+                            self,
+                            group,
+                            subgroups=subgroups)
             class_ref.__dict__[function.im_func.func_name] = wrapped
         else:
             raise Exception("plain functions not yet supported")
@@ -80,8 +83,8 @@ class Benchmark:
         with open(out_path, 'wb') as fout:
             csvfile = csv.writer(fout)
             for m in self.measures():
-                row = [m.id,m.group,m.init,m.end,
-                          m.elapse,m.data,m.thread_name]
+                row = [m.id,m.group,"%.5f"%m.init,"%.5f"%m.end,
+                          "%.5f"%m.elapse,m.data,m.thread_name]
                 if m.subgroups:
                     subgroups = map(lambda x: "%s %.5f"%x,m.subgroups.items())
                     row.extend(subgroups)
@@ -106,7 +109,8 @@ class Benchmark:
 
                 if not threads_by_name.has_key(thread_name):
                     threads_by_name[thread_name] = self.add_thread(thread_name)
-                threads_by_name[thread_name].add_measure(group,init,end,data=data,subgroups=subgroups)
+                threads_by_name[thread_name]\
+                .add_measure(group,init,end,data=data,subgroups=subgroups)
             self.threads = threads_by_name.values()
         self.loaded_from_file = True
 
