@@ -1,3 +1,4 @@
+import sys
 import pdb
 import os
 import random
@@ -21,23 +22,27 @@ class SingleProcess:
 class SubGroupProcess:
     def __init__(self):
         self.count = 0
-        self.last = None
         
     def sub1(self):
-        pass
+        x = random.random() + 0.01
+        time.sleep(x)
+        return x
 
     def sub2(self):
-        pass
+        x = random.random() + 0.1
+        time.sleep(x)
+        return x
 
     def do_it(self):
-        return
-        x = random.randint(1, 10)
-        if x < 7:
-            time.sleep(random.random() + 0.001)
-        else:
-            time.sleep(random.random() + 0.4)
+        time.sleep(random.random() + 0.02)
+        x1 = self.sub1()
+        x2 = self.sub2()
         self.count += 1
+        self.last = (x1,x2)
         return self.count
+
+    def ez_sub(self):
+        return { "sub1": self.last[0] , "sub2" : self.last[1]}
 
 def test_single_process():
     "testing a simple process benchmark no subtasks"
@@ -101,7 +106,7 @@ def test_link():
     assert len(benchmark.threads) == 1
     assert len(benchmark.measures()) == 5
 
-def test_multihread():
+def test_multithread():
     import threading
     benchmark = ezbench.Benchmark()
     benchmark.link(SingleProcess.do_it)
@@ -124,8 +129,31 @@ def test_multihread():
     for t in benchmark.threads:
         assert len(benchmark.measures(thread_name=t.name)) == 5
 
+def test_subgroups():
+    benchmark = ezbench.Benchmark()
+    benchmark.link(SubGroupProcess.do_it,subgroups=lambda x: x.ez_sub())
+    proc = SubGroupProcess()
+    for x in range(0,5):
+        result = proc.do_it()
+        assert result == x+1, "Sample result does not match the original"
+    top = benchmark.maximum()
+
+    percs = benchmark.percentiles()
+    pdb.set_trace()
+
+    save_here = "./test/results/test_save_and_load.csv"
+    if os.path.exists(save_here):
+        os.remove(save_here)
+    benchmark.save(save_here)
+    assert os.path.exists(save_here)
+
+    from_log = ezbench.Benchmark()
+    from_log.load(save_here)
+    pdb.set_trace()
+
 if __name__ == "__main__":
     #test_single_process()
     #test_save_and_load()
     #test_link()
-    test_multihread()
+    #test_multithread()
+    test_subgroups()

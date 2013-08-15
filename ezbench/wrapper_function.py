@@ -2,14 +2,19 @@ import time
 import pdb
 import threading
 
-def ezbench_wrapper(func,benchmark,group,data=None):
+def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None):
     def wrapped(*args, **kw):
+        self = args[0]
         init = time.time()
         wrapped_result = func(*args, **kw)
         end = time.time()
         thread = threading.currentThread()
         if not thread.__dict__.has_key('ezbench'):
             benchmark.add_thread(thread)
-        thread.ezbench.add_measure(group,init,end,data=data)
+        subgroup_data = None
+        if subgroups:
+            subgroup_data = subgroups(self)
+
+        thread.ezbench.add_measure(group,init,end,data=data,subgroups=subgroup_data)
         return wrapped_result
     return wrapped
