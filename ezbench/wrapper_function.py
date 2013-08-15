@@ -14,7 +14,10 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None):
         subgroup_data = None
         if subgroups:
             subgroup_data = subgroups(self)
+        data_call = None
+        if data:
+            data_call = data(self)
 
-        thread.ezbench.add_measure(group,init,end,data=data,subgroups=subgroup_data)
+        thread.ezbench.add_measure(group,init,end,data=data_call,subgroups=subgroup_data)
         return wrapped_result
     return wrapped

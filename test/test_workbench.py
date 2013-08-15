@@ -41,6 +41,9 @@ class SubGroupProcess:
         self.last = (x1,x2)
         return self.count
 
+    def ez_data_call(self):
+        return "count from data %d"%self.count
+
     def ez_sub(self):
         return { "sub1": self.last[0] , "sub2" : self.last[1]}
 
@@ -154,9 +157,45 @@ def test_subgroups():
         assert percs[x] == percs_log[x]
     assert sorted(percs.keys()) == sorted(percs_log.keys())
 
+def test_data():
+    benchmark = ezbench.Benchmark()
+    benchmark.link(SubGroupProcess.do_it,
+                       subgroups=lambda x: x.ez_sub(),
+                       data=lambda x: x.ez_data_call())
+    proc = SubGroupProcess()
+    for x in range(0,10):
+        result = proc.do_it()
+        assert result == x+1, "Sample result does not match the original"
+    percs = benchmark.percentiles()
+    save_here = "./test/results/test_save_and_load.csv"
+    if os.path.exists(save_here):
+        os.remove(save_here)
+    benchmark.save(save_here)
+
+    for m in benchmark.measures():
+        assert m.data != None
+        assert m.data.endswith(str(m.id))
+        assert m.data.startswith("count from data")
+
+    assert os.path.exists(save_here)
+    from_log = ezbench.Benchmark()
+    from_log.load(save_here)
+
+    for m in from_log.measures():
+        assert m.data != None
+        assert m.data.endswith(str(m.id))
+        assert m.data.startswith("count from data")
+
+    percs_log = from_log.percentiles()
+    for x in percs_log:
+        assert percs[x] == percs_log[x]
+    assert sorted(percs.keys()) == sorted(percs_log.keys())
+
+
 if __name__ == "__main__":
     #test_single_process()
     #test_save_and_load()
     #test_link()
     #test_multithread()
-    test_subgroups()
+    #test_subgroups()
+    test_data()

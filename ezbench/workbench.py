@@ -20,7 +20,7 @@ class Benchmark:
         self.loaded_from_file = False
         self.links = dict()
 
-    def link(self,function,group=None,subgroups=None):
+    def link(self,function,group=None,subgroups=None,data=None):
         if group is None:
             group = ".".join([function.im_class.__name__,
                               function.im_func.__name__])
@@ -30,7 +30,8 @@ class Benchmark:
             wrapped = wrapper_function.ezbench_wrapper(function,
                             self,
                             group,
-                            subgroups=subgroups)
+                            subgroups=subgroups,
+                            data=data)
             class_ref.__dict__[function.im_func.func_name] = wrapped
         else:
             raise Exception("plain functions not yet supported")
