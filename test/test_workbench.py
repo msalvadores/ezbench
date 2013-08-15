@@ -24,12 +24,12 @@ class SubGroupProcess:
         self.count = 0
         
     def sub1(self):
-        x = random.random() + 0.01
+        x = random.random() + 0.0001
         time.sleep(x)
         return x
 
     def sub2(self):
-        x = random.random() + 0.1
+        x = random.random() + 0.5
         time.sleep(x)
         return x
 
@@ -133,13 +133,12 @@ def test_subgroups():
     benchmark = ezbench.Benchmark()
     benchmark.link(SubGroupProcess.do_it,subgroups=lambda x: x.ez_sub())
     proc = SubGroupProcess()
-    for x in range(0,5):
+    for x in range(0,10):
         result = proc.do_it()
         assert result == x+1, "Sample result does not match the original"
     top = benchmark.maximum()
 
     percs = benchmark.percentiles()
-    pdb.set_trace()
 
     save_here = "./test/results/test_save_and_load.csv"
     if os.path.exists(save_here):
@@ -149,7 +148,11 @@ def test_subgroups():
 
     from_log = ezbench.Benchmark()
     from_log.load(save_here)
-    pdb.set_trace()
+
+    percs_log = from_log.percentiles()
+    for x in percs_log:
+        assert percs[x] == percs_log[x]
+    assert sorted(percs.keys()) == sorted(percs_log.keys())
 
 if __name__ == "__main__":
     #test_single_process()
