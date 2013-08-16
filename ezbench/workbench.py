@@ -133,6 +133,8 @@ class Benchmark:
 
     def maximum(self,group=None):
         sample = self.sorted_sample(group=group)
+        if len(sample) == 0:
+            return {"total" : 0.0 }
         res =  { "total" : sample[-1].elapse }
         if sample[-1].subgroups:
             res.update(sample[-1].subgroups)
@@ -140,6 +142,8 @@ class Benchmark:
 
     def median(self,group=None):
         sample = self.sorted_sample(group=group)
+        if len(sample) == 0:
+            return {"total" : 0.0 }
         s = sample[int(math.ceil((len(sample)-1)/2.0))]
         res =  { "total" : s.elapse }
         if s.subgroups:
@@ -151,6 +155,10 @@ class Benchmark:
             include = [70,80,90]
         result = dict()
         sample = self.sorted_sample(group=group)
+        if len(sample) == 0:
+            for x in include:
+                result[x] = {"total" : 0.0 }
+            return result
 
         for perc in include:
             perc_index = int(math.ceil((perc/100.0) * (len(sample)-1)))
