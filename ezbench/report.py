@@ -20,12 +20,14 @@ def print_percentiles(percs,out=sys.stdout):
     out.flush()
 
 def show(benchmark,out=sys.stdout,perc_points=None):
+    if perc_points is None:
+        perc_points = [75,85,95]
     percs = benchmark.percentiles(include=perc_points)
-    out.write("All groups median (%.3f) worst (%.3f)"\
+    out.write("All groups median (%.3f) worst (%.3f)\n"\
             %(benchmark.median()["total"],benchmark.maximum()["total"]))
     print_percentiles(percs,out=out)
     for g in benchmark.groups():
-        print "Group: %s median (%.3f) worst (%.3f)"\
-                %(g,benchmark.median(group=g)["total"],benchmark.maximum(group=g)["total"])
+        out.write("Group: %s median (%.3f) worst (%.3f)\n"\
+                %(g,benchmark.median(group=g)["total"],benchmark.maximum(group=g)["total"]))
         percs = benchmark.percentiles(group=g,include=perc_points)
         print_percentiles(percs,out=out)
