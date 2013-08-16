@@ -142,8 +142,8 @@ class Benchmark:
         sample = self.sorted_sample(group=group)
         s = sample[int(math.ceil((len(sample)-1)/2.0))]
         res =  { "total" : s.elapse }
-        if sample[-1].subgroups:
-            res.update(sample[-1].subgroups)
+        if s.subgroups:
+            res.update(s.subgroups)
         return res
 
     def percentiles(self,group=None,include=None):
