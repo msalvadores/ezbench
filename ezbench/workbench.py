@@ -146,7 +146,9 @@ class Benchmark:
             res.update(sample[-1].subgroups)
         return res
 
-    def percentiles(self,group=None,include=[50,70,90]):
+    def percentiles(self,group=None,include=None):
+        if include is None:
+            include = [70,80,90]
         result = dict()
         sample = self.sorted_sample(group=group)
 
