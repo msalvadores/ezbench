@@ -9,7 +9,7 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None):
         exception = None
         try:
             wrapped_result = func(*args, **kw)
-        except e:
+        except Exception, e:
             exception = e
         end = time.time()
         thread = threading.currentThread()
