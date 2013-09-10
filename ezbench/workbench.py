@@ -88,7 +88,7 @@ class Benchmark:
             csvfile = csv.writer(fout)
             for m in self.measures():
                 row = [m.id,m.group,"%.5f"%m.init,"%.5f"%m.end,
-                          "%.5f"%m.elapse,m.data,m.thread_name]
+                          "%.5f"%m.elapse,m.data,m.thread_name,m.entry_point]
                 if m.subgroups:
                     subgroups = map(lambda x: "%s %.5f"%x,m.subgroups.items())
                     row.extend(subgroups)
@@ -104,7 +104,7 @@ class Benchmark:
                 id,group,init,end,elapse,data,thread_name,entry_point = \
                 (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5],row[6],row[7])
                 subgroups = dict()
-                for s in row[7:]:
+                for s in row[8:]:
                     (sname,svalue) = s.split(" ")
                     svalue = float(svalue)
                     subgroups[sname] = svalue
