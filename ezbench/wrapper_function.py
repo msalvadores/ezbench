@@ -2,7 +2,7 @@ import time
 import pdb
 import threading
 
-def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None):
+def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None,entry_point=None):
     def wrapped(*args, **kw):
         self = args[0]
         init = time.time()
@@ -22,7 +22,8 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None):
         if data:
             data_call = data(self)
 
-        thread.ezbench.add_measure(group,init,end,data=data_call,subgroups=subgroup_data)
+        thread.ezbench.add_measure(group,init,end,data=data_call,
+                                   subgroups=subgroup_data,entry_point=entry_point)
         if exception:
             raise exception
         return wrapped_result

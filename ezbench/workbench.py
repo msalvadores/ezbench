@@ -15,15 +15,17 @@ class Benchmark:
         self.lock = threading.Lock()
         self.pack_fields = "Ifff"
         self.measure_tuple = collections.namedtuple("measure",
-                "id group init end elapse data thread_name subgroups")
+                "id group init end elapse data thread_name subgroups entry_point")
         self.threads = list()
         self.loaded_from_file = False
         self.links = dict()
 
     def link(self,function,group=None,subgroups=None,data=None):
-        if group is None:
-            group = ".".join([function.im_class.__name__,
-                              function.im_func.__name__])
+        entry_point = ".".join([function.im_class.__module__,
+                          function.im_class.__name__,
+                          function.im_func.__name__])
+        if not group:
+            group = ".".join(entry_point.split(".")[-2:])
         self.links[group] = function
         if 'im_class' in dir(function):
             class_ref = function.im_class
@@ -47,7 +49,7 @@ class Benchmark:
         self.threads.append(bt)
         return bt
 
-    def create_measure(self,id,group,init,end,thread_name,data=None,subgroups=None):
+    def create_measure(self,id,group,init,end,thread_name,data=None,subgroups=None,entry_point=None):
         init = float("%.5f"%init)
         end = float("%.5f"%end)
         elapse = float("%.5f"%(end-init)) #get rid of decimal tail
@@ -62,7 +64,8 @@ class Benchmark:
                                      elapse=elapse,
                                      data=data,
                                      subgroups=subgroups,
-                                     thread_name=thread_name)
+                                     thread_name=thread_name,
+                                     entry_point=entry_point)
         return measure
 
     def measure(self,*arg,**kw):
@@ -98,8 +101,8 @@ class Benchmark:
             csvreader = csv.reader(fin)
             threads_by_name = dict()
             for row in csvreader:
-                id,group,init,end,elapse,data,thread_name = \
-                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5],row[6])
+                id,group,init,end,elapse,data,thread_name,entry_point = \
+                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5],row[6],row[7])
                 subgroups = dict()
                 for s in row[7:]:
                     (sname,svalue) = s.split(" ")
@@ -111,7 +114,7 @@ class Benchmark:
                 if not threads_by_name.has_key(thread_name):
                     threads_by_name[thread_name] = self.add_thread(thread_name)
                 threads_by_name[thread_name]\
-                .add_measure(group,init,end,data=data,subgroups=subgroups)
+                .add_measure(group,init,end,data=data,subgroups=subgroups,entry_point=entry_point)
             self.threads = threads_by_name.values()
         self.loaded_from_file = True
 
