@@ -21,6 +21,16 @@ class Benchmark:
         self.links = dict()
 
     def link(self,function,group=None,subgroups=None,data=None):
+        if isinstance(function,basestring):
+            module = function.split(".")[0]
+            if module not in sys.modules:
+                __import__(module)
+            module = sys.modules[module]
+            traverse = module
+            for n in function.split(".")[1:]:
+                traverse = getattr(traverse, n)
+            pdb.set_trace()
+            function = traverse
         entry_point = ".".join([function.im_class.__module__,
                           function.im_class.__name__,
                           function.im_func.__name__])
@@ -33,6 +43,7 @@ class Benchmark:
                             self,
                             group,
                             subgroups=subgroups,
+                            entry_point=entry_point,
                             data=data)
             class_ref.__dict__[function.im_func.func_name] = wrapped
         else:
