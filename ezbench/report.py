@@ -10,8 +10,6 @@ def subgroups(data):
         res.append("%s: %.3f (%.1f%%)"%(k,data[k],perc))
     return "    ".join(res)
 
-
-
 def print_percentiles(percs,out=sys.stdout):
     ps = map(lambda perc: "%d%%: %.5f\t\t%s"%(perc,percs[perc]["total"],subgroups(percs[perc])),
              sorted(percs.keys(),reverse=True))

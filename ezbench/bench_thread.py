@@ -10,13 +10,12 @@ class BenchmarkThread:
         self.benchmark = benchmark
         self.id_measure = 0
 
-    def add_measure(self,group,init,end,data=None,subgroups=None,entry_point=None):
+    def add_measure(self,group,init,end,**kw):
         if self.benchmark.loaded_from_file:
             raise Exception("Benchmarks loaded from file cannot resume processing")
         with self.lock:
             self.id_measure += 1
             measure = self.benchmark.create_measure(self.id_measure,
-                                          group, init, end,self.name, 
-                                          data=data,subgroups=subgroups,
-                                          entry_point=entry_point)
+                                          group, init, end, self.name, 
+                                          **kw)
         self.measures.append(measure)

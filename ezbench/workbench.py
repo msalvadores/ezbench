@@ -9,16 +9,18 @@ import time
 import math
 import wrapper_function
 from bench_thread import BenchmarkThread
+import sys
 
 class Benchmark:
     def __init__(self):
         self.lock = threading.Lock()
         self.pack_fields = "Ifff"
-        self.measure_tuple = collections.namedtuple("measure",
-                "id group init end elapse data thread_name subgroups entry_point")
         self.threads = list()
         self.loaded_from_file = False
         self.links = dict()
+        self.floats = ["init","end","elapse"]
+        self.fields = ["id","group","init","end","elapse","data",
+                        "thread_name","entry_point","serialize_args"]
 
     def link(self,function,group=None,subgroups=None,data=None):
         if isinstance(function,basestring):
@@ -60,23 +62,18 @@ class Benchmark:
         self.threads.append(bt)
         return bt
 
-    def create_measure(self,id,group,init,end,thread_name,data=None,subgroups=None,entry_point=None):
+    def create_measure(self,id,group,init,end,thread_name,**kw):
         init = float("%.5f"%init)
         end = float("%.5f"%end)
         elapse = float("%.5f"%(end-init)) #get rid of decimal tail
-        if subgroups:
-            for x in subgroups:
-                subgroups[x] = float("%.5f"%subgroups[x])
+        if "subgroups" in kw and  len(kw["subgroups"]):
+            for x in kw["subgroups"]:
+                kw["subgroups"][x] = float("%.5f"%kw["subgroups"][x])
             
-        measure = self.measure_tuple(id=id,
-                                     group=group,
-                                     init=init,
-                                     end=end,
-                                     elapse=elapse,
-                                     data=data,
-                                     subgroups=subgroups,
-                                     thread_name=thread_name,
-                                     entry_point=entry_point)
+        measure = dict(id=id,group=group,init=init,
+                       end=end,elapse=elapse,
+                       thread_name=thread_name)
+        measure.update(kw)
         return measure
 
     def measure(self,*arg,**kw):
@@ -98,36 +95,57 @@ class Benchmark:
         with open(out_path, 'wb') as fout:
             csvfile = csv.writer(fout)
             for m in self.measures():
-                row = [m.id,m.group,"%.5f"%m.init,"%.5f"%m.end,
-                          "%.5f"%m.elapse,m.data,m.thread_name,m.entry_point]
-                if m.subgroups:
-                    subgroups = map(lambda x: "%s %.5f"%x,m.subgroups.items())
-                    row.extend(subgroups)
+                row = []
+                for f in self.fields:
+                    if isinstance(m[f],float):
+                        row.append("%.5f"%m[f])
+                    else:
+                        row.append(m[f])
+                if m["subgroups"]:
+                    for sb in sorted(m["subgroups"].keys()):
+                        row.append("%s %.5f"%(sb,m["subgroups"][sb]))
                 csvfile.writerow(row)
 
     def load(self,from_path):
         if len(self.threads) > 0:
             raise Exception("Cannot load a file in a benchmark with data")
+        groups = dict()
         with open(from_path, 'rb') as fin:
             csvreader = csv.reader(fin)
             threads_by_name = dict()
             for row in csvreader:
-                id,group,init,end,elapse,data,thread_name,entry_point = \
-                (row[0],row[1],float(row[2]),float(row[3]),float(row[4]),row[5],row[6],row[7])
+                entry = {}
+                for f in range(len(self.fields)):
+                    if self.fields[f] in self.floats:
+                        entry[self.fields[f]] = float(row[f])
+                    else:
+                        entry[self.fields[f]] = row[f]
                 subgroups = dict()
-                for s in row[8:]:
+                for s in row[len(self.fields):]:
                     (sname,svalue) = s.split(" ")
                     svalue = float(svalue)
                     subgroups[sname] = svalue
                 if len(subgroups) == 0:
                     subgroups = None
 
+                thread_name = entry["thread_name"]
                 if not threads_by_name.has_key(thread_name):
                     threads_by_name[thread_name] = self.add_thread(thread_name)
+                group,init,end = entry["group"],entry["init"],entry["end"]
+                del entry["group"]
+                del entry["init"]
+                del entry["end"]
+                del entry["id"]
+                del entry["thread_name"]
                 threads_by_name[thread_name]\
-                .add_measure(group,init,end,data=data,subgroups=subgroups,entry_point=entry_point)
+                .add_measure(group,init,end,**entry)
+                if group not in groups:
+                    groups[group]=entry["entry_point"]
             self.threads = threads_by_name.values()
         self.loaded_from_file = True
+        for (group,entry_point) in groups.items():
+            self.link(entry_point,group=group)
+        pdb.set_trace()
 
     def groups(self):
         return self.links.keys()
@@ -137,21 +155,21 @@ class Benchmark:
         for thread in self.threads:
             if thread_name is None or thread.name == thread_name:
                 for measure in thread.measures:
-                    if group is None or group == measure.group:
+                    if group is None or group == measure["group"]:
                         sample.append(measure)
         return sample
 
     def sorted_sample(self,group=None,thread_name=None):
         sample = self.measures(thread_name=thread_name,group=group)
-        return sorted(sample, key=lambda x: x.elapse)
+        return sorted(sample, key=lambda x: x["elapse"])
 
     def maximum(self,group=None):
         sample = self.sorted_sample(group=group)
         if len(sample) == 0:
             return {"total" : 0.0 }
-        res =  { "total" : sample[-1].elapse }
-        if sample[-1].subgroups:
-            res.update(sample[-1].subgroups)
+        res =  { "total" : sample[-1]["elapse"] }
+        if sample[-1]["subgroups"]:
+            res.update(sample[-1]["subgroups"])
         return res
 
     def median(self,group=None):
@@ -159,9 +177,9 @@ class Benchmark:
         if len(sample) == 0:
             return {"total" : 0.0 }
         s = sample[int(math.ceil((len(sample)-1)/2.0))]
-        res =  { "total" : s.elapse }
-        if s.subgroups:
-            res.update(s.subgroups)
+        res =  { "total" : s["elapse"] }
+        if "subgroups" in s and len(s["subgroups"]) > 0:
+            res.update(s["subgroups"])
         return res
 
     def percentiles(self,group=None,include=None):
@@ -176,8 +194,8 @@ class Benchmark:
 
         for perc in include:
             perc_index = int(math.ceil((perc/100.0) * (len(sample)-1)))
-            result[perc] = { "total": sample[perc_index].elapse }
-            if sample[perc_index].subgroups:
-                result[perc].update(sample[perc_index].subgroups)
+            result[perc] = { "total": sample[perc_index]["elapse"] }
+            if sample[perc_index]["subgroups"]:
+                result[perc].update(sample[perc_index]["subgroups"])
         return result
 
