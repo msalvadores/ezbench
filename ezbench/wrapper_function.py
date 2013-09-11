@@ -21,14 +21,14 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None,entry_point=No
         subgroup_data = None
         if subgroups:
             subgroup_data = subgroups(self)
-        else:
-            pdb.set_trace()
+        elif hasattr(self,"ez_sub"):
+            subgroup_data = getattr(self,"ez_sub")()
 
         data_call = None
         if data:
             data_call = data(self)
-        else:
-            pdb.set_trace()
+        elif hasattr(self,"ez_data"):
+            data_call = getattr(self,"ez_data")()
 
         thread.ezbench.add_measure(group,init,end,data=data_call,
                                    subgroups=subgroup_data,

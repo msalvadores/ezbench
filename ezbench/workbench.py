@@ -2,7 +2,6 @@ from __future__ import with_statement
 import csv
 import os
 import threading
-import pdb
 import collections
 import struct
 import time
@@ -31,7 +30,6 @@ class Benchmark:
             traverse = module
             for n in function.split(".")[1:]:
                 traverse = getattr(traverse, n)
-            pdb.set_trace()
             function = traverse
         entry_point = ".".join([function.im_class.__module__,
                           function.im_class.__name__,
@@ -109,7 +107,6 @@ class Benchmark:
     def load(self,from_path):
         if len(self.threads) > 0:
             raise Exception("Cannot load a file in a benchmark with data")
-        groups = dict()
         with open(from_path, 'rb') as fin:
             csvreader = csv.reader(fin)
             threads_by_name = dict()
@@ -139,13 +136,19 @@ class Benchmark:
                 del entry["thread_name"]
                 threads_by_name[thread_name]\
                 .add_measure(group,init,end,**entry)
-                if group not in groups:
-                    groups[group]=entry["entry_point"]
             self.threads = threads_by_name.values()
         self.loaded_from_file = True
+
+    def fork(self):
+        forked = Benchmark()
+        groups = dict()
+        for m in self.measures():
+            group = m["group"]
+            if group not in groups:
+                groups[group]=m["entry_point"]
         for (group,entry_point) in groups.items():
-            self.link(entry_point,group=group)
-        pdb.set_trace()
+            forked.link(entry_point,group=group)
+        return forked
 
     def groups(self):
         return self.links.keys()
