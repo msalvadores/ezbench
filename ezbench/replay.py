@@ -15,13 +15,26 @@ def replay_call(client,entry_point,args,kw):
     args = [client] + args
     function(*args,**kw)
 
-def call_measures(client,measures):
-    while len(measures) > 0:
-        to_call = measures.pop(0)
-        line_args = json.loads(to_call["serialize_args"])
         args = line_args["args"]
-        kw = line_args["kw"]
-        replay_call(client,to_call["entry_point"],args,kw)
+
+class ReplayThread(threading.Thread):
+    def __init__(self,client,log):
+        super(ReplayThread,self).__init__()
+        self.client = client
+        self.init_length = len(log)
+        self.log = log
+        self.errors = []
+
+    def run(self):
+        while len(self.log) > 0:
+            to_call = self.log.pop(0)
+            line_args = json.loads(to_call["serialize_args"])
+            args = line_args["args"]
+            kw = line_args["kw"]
+            try:
+                replay_call(self.client,to_call["entry_point"],args,kw)
+            except Exception, exc:
+                self.errors.append(exc)
 
 class Replay:
 
