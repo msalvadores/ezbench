@@ -16,6 +16,7 @@ class Benchmark:
         self.pack_fields = "Ifff"
         self.threads = list()
         self.loaded_from_file = False
+        self.replay = None
         self.links = dict()
         self.floats = ["init","end","elapse"]
         self.fields = ["id","group","init","end","elapse","data",
