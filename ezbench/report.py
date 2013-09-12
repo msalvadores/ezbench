@@ -11,8 +11,7 @@ def subgroups(data):
     for k in sorted(data.keys()):
         if k == "total":
             continue
-        perc = (data[k]/total)*100
-        res.append("%s: %.3f (%.1f%%)"%(k,data[k],perc))
+        res.append("%s: %.3f"%(k,data[k]))
     return "    ".join(res)
 
 def print_percentiles(percs,out=sys.stdout):
