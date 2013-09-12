@@ -37,12 +37,14 @@ class ShowThread(threading.Thread):
         curses.start_color()
         self.screen.keypad(1)
         self.screen.border(0)
+        curses.halfdelay(10)
         try:
             curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
             curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
             curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
             curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-            self.screen.addstr(1, 2, "Benchmark in progress...", curses.color_pair(3) | curses.A_BOLD)
+            self.screen.addstr(1, 2, "Benchmark in progress... ('q' to quit)",
+                                      curses.color_pair(3) | curses.A_BOLD)
             self.screen.refresh()
 
             while self.continue_thread:
@@ -55,13 +57,17 @@ class ShowThread(threading.Thread):
                         c|= curses.A_BOLD
                     self.screen.addstr(x + first_line, 2 ,lines[x], c)
                 self.screen.refresh()
-                time.sleep(1.2)
+                qc = self.screen.getch()
+                if qc != -1 and chr(qc) == 'q':
+                    self.continue_thread = False
         except Exception, exc:
             print exc
+
         curses.nocbreak()
         self.screen.keypad(0)
         curses.echo()
         curses.endwin()
+        print "exiting monitor ..."
 
     def end(self):
         self.continue_thread = False
