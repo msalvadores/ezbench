@@ -48,9 +48,13 @@ class ShowThread(threading.Thread):
             self.screen.refresh()
 
             while self.continue_thread:
+                bench_threads = self.bench_thread_info()
+                if bench_threads:
+                    self.screen.addstr(3, 2, bench_threads, curses.color_pair(4))
+
                 data = self.nshow()
                 lines = data.getvalue().split("\n")
-                first_line = 3
+                first_line = 5
                 for x in range(len(lines)):
                     c = curses.color_pair(1)
                     if lines[x].startswith("All") or lines[x].startswith("Group"):
@@ -77,6 +81,15 @@ class ShowThread(threading.Thread):
         out_str = StringIO.StringIO()
         show(self.benchmark,out=out_str,perc_points=self.perc_points)
         return out_str
+
+    def bench_thread_info(self):
+        if not self.benchmark.replay:
+            return None
+        result = []
+        for i in range(len(self.benchmark.replay.pool)):
+            t = self.benchmark.replay.pool[i]
+            result.append("t-%d: %d (%d)"%(i+1,t.init_length,len(t.log)))
+        return " ".join(result)
 
 
 def show(benchmark,out=sys.stdout,perc_points=None):

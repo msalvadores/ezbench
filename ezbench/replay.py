@@ -15,7 +15,6 @@ def replay_call(client,entry_point,args,kw):
     args = [client] + args
     function(*args,**kw)
 
-        args = line_args["args"]
 
 class ReplayThread(threading.Thread):
     def __init__(self,client,log):
@@ -44,23 +43,24 @@ class Replay:
         self.threads_n = threads_n
         self.origin = Benchmark()
         self.origin.load(log_file)
+        self.forked = self.origin.fork()
+        self.forked.replay = self
+        self.pool = list()
 
     def replay(self,shuffle=True):
         measures = list(self.origin.measures())
         if shuffle:
             random.shuffle(measures)
-        t=threading.Thread(target=call_measures,args=([self.client,measures]))
+        t = ReplayThread(self.client,measures)
         t.start()
         return t
 
     def start(self):
-        pool = []
-        forked = self.origin.fork()
         for x in range(self.threads_n):
-            pool.append(self.replay())
-        for t in pool:
+            self.pool.append(self.replay())
+        for t in self.pool:
             t.join()
-        return forked
+        return self.forked
 
 if __name__ == "__main__":
     log_file = sys.argv[1]
