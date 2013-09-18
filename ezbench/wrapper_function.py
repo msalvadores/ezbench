@@ -35,7 +35,6 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None,entry_point=No
                                    entry_point=entry_point,
                                    serialize_args=serialize_args)
         if exception:
-            pdb.set_trace()
             raise exception
         return wrapped_result
     return wrapped
