@@ -10,7 +10,7 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None,entry_point=No
         exception = None
         serialize_args = None
         try:
-            serialize_args = json.dumps({"args":args[1:], "kw": kw})
+            serialize_args = json.dumps({"args":args[1:], "kw": kw},encoding="iso-8859-1")
             wrapped_result = func(*args, **kw)
         except Exception, e:
             exception = e
@@ -35,6 +35,7 @@ def ezbench_wrapper(func,benchmark,group,data=None,subgroups=None,entry_point=No
                                    entry_point=entry_point,
                                    serialize_args=serialize_args)
         if exception:
+            pdb.set_trace()
             raise exception
         return wrapped_result
     return wrapped

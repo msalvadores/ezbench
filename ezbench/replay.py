@@ -27,7 +27,7 @@ class ReplayThread(threading.Thread):
     def run(self):
         while len(self.log) > 0:
             to_call = self.log.pop(0)
-            line_args = json.loads(to_call["serialize_args"])
+            line_args = json.loads(to_call["serialize_args"],encoding="iso-8859-1")
             args = line_args["args"]
             kw = line_args["kw"]
             try:
