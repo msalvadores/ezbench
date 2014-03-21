@@ -65,7 +65,7 @@ class Benchmark:
         init = float("%.5f"%init)
         end = float("%.5f"%end)
         elapse = float("%.5f"%(end-init)) #get rid of decimal tail
-        if "subgroups" in kw and  len(kw["subgroups"]):
+        if "subgroups" in kw and kw["subgroups"] and len(kw["subgroups"]):
             for x in kw["subgroups"]:
                 kw["subgroups"][x] = float("%.5f"%kw["subgroups"][x])
             
@@ -182,7 +182,7 @@ class Benchmark:
             return {"total" : 0.0 }
         s = sample[int(math.ceil((len(sample)-1)/2.0))]
         res =  { "total" : s["elapse"] }
-        if "subgroups" in s and len(s["subgroups"]) > 0:
+        if "subgroups" in s and s["subgroups"] and len(s["subgroups"]):
             res.update(s["subgroups"])
         return res
 
